@@ -2,17 +2,16 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 
 // ============================================================================
-// FIREBASE CONFIGURATION
+// FIREBASE CONFIGURATION — Card Vault
 // ============================================================================
-// TODO: Replace with your actual Firebase config from Firebase Console
-// Go to: https://console.firebase.google.com → Project Settings → Your apps
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDfSpidtqzDa8MPlchBstdaKgX-xjgHciA",
+  authDomain: "cardvault-4566c.firebaseapp.com",
+  projectId: "cardvault-4566c",
+  storageBucket: "cardvault-4566c.firebasestorage.app",
+  messagingSenderId: "127784051152",
+  appId: "1:127784051152:web:2df1be135491168850d9d5",
+  measurementId: "G-3KNTXNHV0N"
 };
 
 // Initialize Firebase
