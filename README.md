@@ -36,18 +36,20 @@ A. Alur Autentikasi (Login/Register)
       Role-Based Access: Setelah login, aplikasi akan mengecek apakah pengguna ini adalah admin atau user biasa, lalu mengarahkannya ke dashboard yang sesuai.
       
 B. Alur Pengguna Biasa (User / Customer)
-      Browse (Dashboard): Menampilkan daftar kartu yang dijual. User bisa:
-      Mencari kartu lewat Search Bar.
-      Menyaring (filter) berdasarkan kelangkaan (Rarity) dan Tipe Elemen.
-      Mengatur rentang harga menggunakan Slider.
-      Klik kartu untuk melihat detailnya, atau klik tombol keranjang (Cart) & bintang (Vault).
-      My Vault (Portofolio): Halaman khusus di mana kolektor bisa melihat statistik kartu yang mereka miliki (Total Kartu, Total Nilai Koleksi dalam USD, Harga Rata-rata).
-      Checkout Flow (Alur Belanja):
-      Cart: Melihat barang, mengubah quantity, melihat pajak & total.
-      Checkout: Halaman pemilihan metode pembayaran.
-      Bank Transfer: Jika dipilih, akan muncul nomor Virtual Account (BCA/Mandiri/BNI) buatan, tombol copy, instruksi, dan timer hitung mundur 24 jam.
-      QRIS: Jika dipilih, akan muncul gambar dummy QR Code. Aplikasi memiliki simulasi otomatis di mana dalam 5 detik sistem akan mendeteksi pembayaran seolah-olah user baru saja men-scan dari HP mereka.
-      Order Success: Setelah pembayaran "berhasil", muncul halaman konfirmasi pesanan dengan nomor order acak (contoh: CV-12345678).
+      Browse (Dashboard): Menampilkan daftar kartu yang dijual. 
+        User bisa:
+        Mencari kartu lewat Search Bar.
+        Menyaring (filter) berdasarkan kelangkaan (Rarity) dan Tipe Elemen.
+        Mengatur rentang harga menggunakan Slider.
+        Klik kartu untuk melihat detailnya, atau klik tombol keranjang (Cart) & bintang (Vault).
+        My Vault (Portofolio): Halaman khusus di mana kolektor bisa melihat statistik kartu yang mereka miliki (Total Kartu, Total Nilai Koleksi              dalam USD, Harga Rata-rata).
+        
+   Checkout Flow (Alur Belanja):
+        Cart: Melihat barang, mengubah quantity, melihat pajak & total.
+        Checkout: Halaman pemilihan metode pembayaran.
+        Bank Transfer: Jika dipilih, akan muncul nomor Virtual Account (BCA/Mandiri/BNI) buatan, tombol copy, instruksi, dan timer hitung mundur 24 jam.
+        QRIS: Jika dipilih, akan muncul gambar dummy QR Code. Aplikasi memiliki simulasi otomatis di mana dalam 5 detik sistem akan mendeteksi pembayaran seolah-olah user baru saja men-scan dari HP mereka.
+        Order Success: Setelah pembayaran "berhasil", muncul halaman konfirmasi pesanan dengan nomor order acak (contoh: CV-12345678).
       
 C. Alur Administrator (Admin)
   Jika login sebagai admin, tampilannya berbeda (Admin Dashboard):
