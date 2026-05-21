@@ -6,13 +6,16 @@ import { ChevronDown, LogOut, Plus, Trash2, Edit2, Eye, EyeOff, Search, Filter, 
 // ============================================================================
 
 const dummyCards = [
-  { id: 1, nama: "Charizard ex", ekspansi: "Scarlet & Violet", kondisi: "Mint", stok: 5, harga_vault: 45.99, harga_cardtell: 48.50, harga_pricecharting: 46.99, gambar: "🔥", tipe: "Fire", kelangkaan: "Rare", deskripsi: "Classic fire dragon with stunning artwork" },
-  { id: 2, nama: "Gengar ex", ekspansi: "Brilliant Stars", kondisi: "Near Mint", stok: 8, harga_vault: 32.50, harga_cardtell: 35.00, harga_pricecharting: 33.99, gambar: "👻", tipe: "Psychic", kelangkaan: "Rare", deskripsi: "Ghostly spectral card with holographic foil" },
-  { id: 3, nama: "Rayquaza ex", ekspansi: "Dragon Vault", kondisi: "Lightly Played", stok: 3, harga_vault: 62.00, harga_cardtell: 65.99, harga_pricecharting: 63.50, gambar: "🐉", tipe: "Dragon", kelangkaan: "Ultra Rare", deskripsi: "Powerful dragon card in excellent condition" },
-  { id: 4, nama: "Mewtwo ex", ekspansi: "Base Set", kondisi: "Mint", stok: 2, harga_vault: 89.99, harga_cardtell: 95.00, harga_pricecharting: 92.50, gambar: "🧬", tipe: "Psychic", kelangkaan: "Ultra Rare", deskripsi: "Legendary psychic powerhouse from Base Set" },
-  { id: 5, nama: "Blastoise ex", ekspansi: "Brilliant Stars", kondisi: "Near Mint", stok: 6, harga_vault: 38.75, harga_cardtell: 41.00, harga_pricecharting: 39.99, gambar: "💧", tipe: "Water", kelangkaan: "Rare", deskripsi: "Water cannon specialist with dynamic pose" },
-  { id: 6, nama: "Venusaur ex", ekspansi: "Scarlet & Violet", kondisi: "Lightly Played", stok: 4, harga_vault: 35.50, harga_cardtell: 38.00, harga_pricecharting: 37.25, gambar: "🌿", tipe: "Grass", kelangkaan: "Rare", deskripsi: "Nature's fury captured in foil perfection" },
+  { id: 1, nama: "Charizard ex", ekspansi: "Scarlet & Violet", kondisi: "Mint", stok: 5, harga_vault: 45.99, harga_cardtell: 48.50, harga_pricecharting: 46.99, gambar: "https://images.pokemontcg.io/sv3pt5/199_hires.png", tipe: "Fire", kelangkaan: "Rare", deskripsi: "Classic fire dragon with stunning artwork" },
+  { id: 2, nama: "Gengar ex", ekspansi: "Brilliant Stars", kondisi: "Near Mint", stok: 8, harga_vault: 32.50, harga_cardtell: 35.00, harga_pricecharting: 33.99, gambar: "https://images.pokemontcg.io/swsh11tg/TG06_hires.png", tipe: "Psychic", kelangkaan: "Rare", deskripsi: "Ghostly spectral card with holographic foil" },
+  { id: 3, nama: "Rayquaza ex", ekspansi: "Dragon Vault", kondisi: "Lightly Played", stok: 3, harga_vault: 62.00, harga_cardtell: 65.99, harga_pricecharting: 63.50, gambar: "https://images.pokemontcg.io/dv1/11_hires.png", tipe: "Dragon", kelangkaan: "Ultra Rare", deskripsi: "Powerful dragon card in excellent condition" },
+  { id: 4, nama: "Mewtwo ex", ekspansi: "Base Set", kondisi: "Mint", stok: 2, harga_vault: 89.99, harga_cardtell: 95.00, harga_pricecharting: 92.50, gambar: "https://images.pokemontcg.io/sv3pt5/150_hires.png", tipe: "Psychic", kelangkaan: "Ultra Rare", deskripsi: "Legendary psychic powerhouse from Base Set" },
+  { id: 5, nama: "Blastoise ex", ekspansi: "Brilliant Stars", kondisi: "Near Mint", stok: 6, harga_vault: 38.75, harga_cardtell: 41.00, harga_pricecharting: 39.99, gambar: "https://images.pokemontcg.io/sv3pt5/184_hires.png", tipe: "Water", kelangkaan: "Rare", deskripsi: "Water cannon specialist with dynamic pose" },
+  { id: 6, nama: "Venusaur ex", ekspansi: "Scarlet & Violet", kondisi: "Lightly Played", stok: 4, harga_vault: 35.50, harga_cardtell: 38.00, harga_pricecharting: 37.25, gambar: "https://images.pokemontcg.io/sv3pt5/198_hires.png", tipe: "Grass", kelangkaan: "Rare", deskripsi: "Nature's fury captured in foil perfection" },
 ];
+
+// Helper: check if gambar is a URL or emoji
+const isImageUrl = (gambar) => gambar && (gambar.startsWith('http') || gambar.startsWith('/'));
 
 const dummyUsers = {
   admin: { id: 'admin', nama: 'Admin Store', email: 'admin@cardvault.com', role: 'admin', password: 'admin123' },
@@ -617,8 +620,12 @@ function CardItem({ card, onView, onAddCart, onAddVault }) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition hover:scale-105 transform duration-300">
       {/* Card Image Area */}
-      <div className="h-64 bg-gradient-to-br from-orange-100 to-orange-50 flex items-center justify-center text-6xl relative overflow-hidden group">
-        <div className="text-7xl group-hover:scale-110 transition duration-300">{card.gambar}</div>
+      <div className="h-80 bg-gradient-to-br from-orange-100 to-orange-50 flex items-center justify-center relative overflow-hidden group">
+        {isImageUrl(card.gambar) ? (
+          <img src={card.gambar} alt={card.nama} className="h-full w-full object-contain p-3 group-hover:scale-105 transition duration-300" />
+        ) : (
+          <div className="text-7xl group-hover:scale-110 transition duration-300">{card.gambar}</div>
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition"></div>
       </div>
 
@@ -703,8 +710,12 @@ function CardDetailPage({ card, onBack, onAddToCart, onAddToVault, setShowGrader
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Card Visual */}
         <div className="lg:col-span-1">
-          <div className="bg-gradient-to-br from-orange-100 to-orange-50 rounded-2xl p-8 text-center h-96 flex flex-col items-center justify-center sticky top-24">
-            <div className="text-9xl mb-4">{card.gambar}</div>
+          <div className="bg-gradient-to-br from-orange-100 to-orange-50 rounded-2xl p-4 text-center flex flex-col items-center justify-center sticky top-24">
+            {isImageUrl(card.gambar) ? (
+              <img src={card.gambar} alt={card.nama} className="max-h-96 w-full object-contain rounded-lg mb-4" />
+            ) : (
+              <div className="text-9xl mb-4">{card.gambar}</div>
+            )}
             <h2 className="font-black text-2xl text-gray-900 text-center">{card.nama}</h2>
           </div>
         </div>
@@ -857,7 +868,11 @@ function ShoppingCart_Page({ cart, cartDispatch, showNotif }) {
           <div className="lg:col-span-2 space-y-4">
             {cart.map(item => (
               <div key={item.id} className="bg-white rounded-xl border border-gray-200 p-6 flex gap-4">
-                <div className="text-6xl">{item.gambar}</div>
+                {isImageUrl(item.gambar) ? (
+                  <img src={item.gambar} alt={item.nama} className="w-20 h-28 object-contain rounded-lg" />
+                ) : (
+                  <div className="text-6xl">{item.gambar}</div>
+                )}
                 <div className="flex-1">
                   <h3 className="font-black text-lg text-gray-900">{item.nama}</h3>
                   <p className="text-sm text-gray-600 mb-2">{item.ekspansi}</p>
@@ -966,7 +981,11 @@ function VaultPage({ vault, vaultDispatch, showNotif }) {
         <div className="space-y-4">
           {vault.map(item => (
             <div key={item.id} className="bg-white rounded-xl border border-gray-200 p-6 flex items-center gap-4">
-              <div className="text-5xl">{item.gambar}</div>
+              {isImageUrl(item.gambar) ? (
+                <img src={item.gambar} alt={item.nama} className="w-16 h-24 object-contain rounded-lg" />
+              ) : (
+                <div className="text-5xl">{item.gambar}</div>
+              )}
               <div className="flex-1">
                 <h3 className="font-black text-lg text-gray-900">{item.nama}</h3>
                 <p className="text-sm text-gray-600">{item.ekspansi}</p>
@@ -1184,7 +1203,14 @@ function AdminDashboard({ currentPage, setCurrentPage, showNotif, setShowGrader,
             <tbody>
               {inventory.slice(0, 5).map(card => (
                 <tr key={card.id} className="border-b border-gray-200 hover:bg-gray-50 transition">
-                  <td className="px-6 py-4 font-bold text-gray-900">{card.gambar} {card.nama}</td>
+                  <td className="px-6 py-4 font-bold text-gray-900 flex items-center gap-2">
+                    {isImageUrl(card.gambar) ? (
+                      <img src={card.gambar} alt={card.nama} className="w-10 h-14 object-contain rounded" />
+                    ) : (
+                      <span>{card.gambar}</span>
+                    )}
+                    {card.nama}
+                  </td>
                   <td className="px-6 py-4 text-gray-700">{card.ekspansi}</td>
                   <td className="px-6 py-4 font-bold text-orange-600">${card.harga_vault.toFixed(2)}</td>
                   <td className="px-6 py-4">
@@ -1340,7 +1366,14 @@ function InventoryManager({ inventory, inventoryDispatch, showNotif }) {
             <tbody>
               {inventory.map(card => (
                 <tr key={card.id} className="border-b border-gray-200 hover:bg-gray-50 transition">
-                  <td className="px-6 py-4 font-bold text-gray-900">{card.gambar} {card.nama}</td>
+                  <td className="px-6 py-4 font-bold text-gray-900 flex items-center gap-2">
+                    {isImageUrl(card.gambar) ? (
+                      <img src={card.gambar} alt={card.nama} className="w-10 h-14 object-contain rounded" />
+                    ) : (
+                      <span>{card.gambar}</span>
+                    )}
+                    {card.nama}
+                  </td>
                   <td className="px-6 py-4 text-gray-700">{card.ekspansi}</td>
                   <td className="px-6 py-4">
                     <span className="bg-gray-100 text-gray-700 text-xs font-bold px-2 py-1 rounded">{card.kondisi}</span>
