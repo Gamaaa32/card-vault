@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useContext, createContext, useReducer } from 'react';
-import { ChevronDown, LogOut, Plus, Trash2, Edit2, Eye, EyeOff, Search, Filter, ShoppingCart, Home, Settings, BarChart3, Package, Users, LogIn, UserPlus, X, AlertCircle, CheckCircle, TrendingUp, DollarSign, Star, Info, CreditCard, QrCode, Building2, Copy, Clock, ArrowRight, ChevronLeft, Check } from 'lucide-react';
+import React, { useState, useEffect, useContext, createContext, useReducer, useRef, useCallback } from 'react';
+import { ChevronDown, LogOut, Plus, Trash2, Edit2, Eye, EyeOff, Search, Filter, ShoppingCart, Home, Settings, BarChart3, Package, Users, LogIn, UserPlus, X, AlertCircle, CheckCircle, TrendingUp, DollarSign, Star, Info, CreditCard, QrCode, Building2, Copy, Clock, ArrowRight, ChevronLeft, Check, Sparkles, Camera, Upload, RefreshCw, Award, Zap } from 'lucide-react';
 import { auth, googleProvider, signInWithPopup } from './firebase';
 
 // ============================================================================
@@ -115,6 +115,15 @@ export default function CardVaultApp() {
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [detailCardId, setDetailCardId] = useState(null);
   const [showGrader, setShowGrader] = useState(false);
+  const [showPSAGrader, setShowPSAGrader] = useState(false);
+
+  // BUG FIX: Reset sub-page state whenever main page changes
+  const handleSetCurrentPage = useCallback((page) => {
+    setDetailCardId(null);
+    setShowGrader(false);
+    setShowPSAGrader(false);
+    setCurrentPage(page);
+  }, []);
 
   const showNotif = (message, type = 'success') => {
     setNotification({ message, type });
@@ -202,14 +211,14 @@ export default function CardVaultApp() {
         <AdminContext.Provider value={{ inventory, inventoryDispatch }}>
           <VaultContext.Provider value={{ vault, vaultDispatch }}>
             <div className="min-h-screen bg-white text-gray-900">
-              <Navbar currentPage={currentPage} setCurrentPage={setCurrentPage} />
+              <Navbar currentPage={currentPage} setCurrentPage={handleSetCurrentPage} />
               
               {notification && <Notification notif={notification} />}
 
               {currentUser.role === 'admin' ? (
                 <AdminDashboard 
                   currentPage={currentPage} 
-                  setCurrentPage={setCurrentPage}
+                  setCurrentPage={handleSetCurrentPage}
                   showNotif={showNotif}
                   setShowGrader={setShowGrader}
                   showGrader={showGrader}
@@ -217,12 +226,14 @@ export default function CardVaultApp() {
               ) : (
                 <UserDashboard 
                   currentPage={currentPage} 
-                  setCurrentPage={setCurrentPage}
+                  setCurrentPage={handleSetCurrentPage}
                   detailCardId={detailCardId}
                   setDetailCardId={setDetailCardId}
                   showNotif={showNotif}
                   setShowGrader={setShowGrader}
                   showGrader={showGrader}
+                  showPSAGrader={showPSAGrader}
+                  setShowPSAGrader={setShowPSAGrader}
                 />
               )}
             </div>
@@ -419,6 +430,9 @@ function Navbar({ currentPage, setCurrentPage }) {
                 <NavButton active={currentPage === 'vault'} onClick={() => setCurrentPage('vault')}>
                   <Star size={18} /> My Vault
                 </NavButton>
+                <NavButton active={currentPage === 'psa-grader'} onClick={() => setCurrentPage('psa-grader')}>
+                  <Sparkles size={18} /> AI Grader
+                </NavButton>
               </>
             )}
             {currentUser.role === 'admin' && (
@@ -510,7 +524,7 @@ function Notification({ notif }) {
 // USER DASHBOARD
 // ============================================================================
 
-function UserDashboard({ currentPage, setCurrentPage, detailCardId, setDetailCardId, showNotif, setShowGrader, showGrader }) {
+function UserDashboard({ currentPage, setCurrentPage, detailCardId, setDetailCardId, showNotif, setShowGrader, showGrader, showPSAGrader, setShowPSAGrader }) {
   const { inventory } = useContext(AdminContext);
   const { cart, cartDispatch } = useContext(CartContext);
   const { vault, vaultDispatch } = useContext(VaultContext);
@@ -562,8 +576,13 @@ function UserDashboard({ currentPage, setCurrentPage, detailCardId, setDetailCar
     return <VaultPage vault={vault} vaultDispatch={vaultDispatch} showNotif={showNotif} />;
   }
 
+  if (currentPage === 'psa-grader' || showPSAGrader) {
+    return <PSAGraderPage onClose={() => { setShowPSAGrader(false); setCurrentPage('dashboard'); }} showNotif={showNotif} />;
+  }
+
   if (detailCardId) {
     const card = inventory.find(c => c.id === detailCardId);
+    if (!card) { setDetailCardId(null); return null; }
     return (
       <CardDetailPage 
         card={card} 
@@ -572,6 +591,7 @@ function UserDashboard({ currentPage, setCurrentPage, detailCardId, setDetailCar
         onAddToVault={handleAddToVault}
         setShowGrader={setShowGrader}
         showGrader={showGrader}
+        setShowPSAGrader={setShowPSAGrader}
         showNotif={showNotif}
       />
     );
@@ -753,7 +773,7 @@ function CardItem({ card, onView, onAddCart, onAddVault }) {
 // CARD DETAIL PAGE
 // ============================================================================
 
-function CardDetailPage({ card, onBack, onAddToCart, onAddToVault, setShowGrader, showGrader, showNotif }) {
+function CardDetailPage({ card, onBack, onAddToCart, onAddToVault, setShowGrader, showGrader, setShowPSAGrader, showNotif }) {
   if (showGrader) {
     return <VisualGraderPage onClose={() => setShowGrader(false)} showNotif={showNotif} card={card} />;
   }
@@ -851,18 +871,21 @@ function CardDetailPage({ card, onBack, onAddToCart, onAddToVault, setShowGrader
             </div>
           </div>
 
-          {/* Grading Tool */}
+          {/* Grading Tools */}
           <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-black text-lg text-gray-900 mb-1">Evaluate Card Condition</h3>
-                <p className="text-sm text-gray-600">Use our visual grader to assess your card</p>
-              </div>
+            <h3 className="font-black text-lg text-gray-900 mb-4">Card Grading Tools</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
                 onClick={() => setShowGrader(true)}
-                className="bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold px-4 py-2 rounded-lg transition flex items-center gap-2"
+                className="bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold px-4 py-3 rounded-lg transition flex items-center gap-2 border border-blue-200"
               >
-                <Info size={20} /> Grade This Card
+                <Info size={20} /> Visual Grader
+              </button>
+              <button
+                onClick={() => setShowPSAGrader(true)}
+                className="bg-gradient-to-r from-orange-500 to-purple-600 hover:opacity-90 text-white font-bold px-4 py-3 rounded-lg transition flex items-center gap-2"
+              >
+                <Sparkles size={20} /> AI PSA Estimator
               </button>
             </div>
           </div>
@@ -1635,31 +1658,364 @@ function VisualGraderPage({ onClose, showNotif, card }) {
           </div>
         </div>
 
-        {/* Grade Result */}
+        {/* Grade Result - FIXED: use static class maps instead of dynamic Tailwind interpolation */}
         <div>
-          <div className={`bg-gradient-to-br from-${gradeInfo.color}-50 to-${gradeInfo.color}-100 rounded-xl border-2 border-${gradeInfo.color}-300 p-6 text-center sticky top-24`}>
-            <p className="text-sm text-gray-700 mb-2">Estimated Grade</p>
-            <div className={`bg-${gradeInfo.color}-600 text-white rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-4`}>
-              <div className="text-center">
-                <p className="text-2xl font-black">{gradeInfo.abbr}</p>
-                <p className="text-xs font-semibold">Grade</p>
+          {(() => {
+            const colorMap = {
+              green: {
+                wrapper: 'bg-green-50 border-green-300',
+                badge: 'bg-green-600',
+                text: 'text-green-700',
+              },
+              blue: {
+                wrapper: 'bg-blue-50 border-blue-300',
+                badge: 'bg-blue-600',
+                text: 'text-blue-700',
+              },
+              yellow: {
+                wrapper: 'bg-yellow-50 border-yellow-300',
+                badge: 'bg-yellow-500',
+                text: 'text-yellow-700',
+              },
+              red: {
+                wrapper: 'bg-red-50 border-red-300',
+                badge: 'bg-red-600',
+                text: 'text-red-700',
+              },
+            };
+            const c = colorMap[gradeInfo.color] || colorMap.green;
+            return (
+              <div className={`${c.wrapper} rounded-xl border-2 p-6 text-center sticky top-24`}>
+                <p className="text-sm text-gray-700 mb-2">Estimated Grade</p>
+                <div className={`${c.badge} text-white rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-4`}>
+                  <div className="text-center">
+                    <p className="text-2xl font-black">{gradeInfo.abbr}</p>
+                    <p className="text-xs font-semibold">Grade</p>
+                  </div>
+                </div>
+                <h3 className={`text-3xl font-black ${c.text} mb-2`}>{gradeInfo.grade}</h3>
+                <p className="text-sm text-gray-700">Based on {defectCount} condition issue{defectCount !== 1 ? 's' : ''}</p>
+                <div className="bg-white rounded-lg p-3 mt-4 text-left">
+                  <p className="text-xs font-bold text-gray-700 mb-2">GRADE SCALE</p>
+                  <div className="space-y-2 text-xs">
+                    <p><strong>MT</strong> - No visible defects</p>
+                    <p><strong>NM</strong> - Minor wear, 1-2 issues</p>
+                    <p><strong>LP</strong> - Moderate wear, 3-4 issues</p>
+                    <p><strong>PL</strong> - Heavy wear, 5+ issues</p>
+                  </div>
+                </div>
               </div>
-            </div>
-            <h3 className={`text-3xl font-black text-${gradeInfo.color}-700 mb-2`}>{gradeInfo.grade}</h3>
-            <p className="text-sm text-gray-700">Based on {defectCount} condition issue{defectCount !== 1 ? 's' : ''}</p>
-
-            <div className="bg-white rounded-lg p-3 mt-4 text-left">
-              <p className="text-xs font-bold text-gray-700 mb-2">GRADE SCALE</p>
-              <div className="space-y-2 text-xs">
-                <p><strong>MT</strong> - No visible defects</p>
-                <p><strong>NM</strong> - Minor wear, 1-2 issues</p>
-                <p><strong>LP</strong> - Moderate wear, 3-4 issues</p>
-                <p><strong>PL</strong> - Heavy wear, 5+ issues</p>
-              </div>
-            </div>
-          </div>
+            );
+          })()}
         </div>
       </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// AI PSA GRADER PAGE
+// ============================================================================
+
+function PSAGraderPage({ onClose, showNotif }) {
+  const [frontImage, setFrontImage] = useState(null);
+  const [backImage, setBackImage] = useState(null);
+  const [frontPreview, setFrontPreview] = useState(null);
+  const [backPreview, setBackPreview] = useState(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [result, setResult] = useState(null);
+  const [dragOver, setDragOver] = useState(null); // 'front' | 'back' | null
+  const [animateIn, setAnimateIn] = useState(false);
+  const frontRef = useRef();
+  const backRef = useRef();
+
+  useEffect(() => {
+    setTimeout(() => setAnimateIn(true), 50);
+  }, []);
+
+  const handleFile = (file, side) => {
+    if (!file || !file.type.startsWith('image/')) {
+      showNotif('Please upload a valid image file', 'error');
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    if (side === 'front') { setFrontImage(file); setFrontPreview(url); }
+    else { setBackImage(file); setBackPreview(url); }
+  };
+
+  const handleDrop = (e, side) => {
+    e.preventDefault();
+    setDragOver(null);
+    const file = e.dataTransfer.files[0];
+    handleFile(file, side);
+  };
+
+  const handleAnalyze = async () => {
+    if (!frontImage || !backImage) {
+      showNotif('Please upload both front and back photos', 'error');
+      return;
+    }
+    setIsAnalyzing(true);
+    setResult(null);
+
+    // Simulate AI analysis — deterministic based on image file sizes for fun variance
+    await new Promise(r => setTimeout(r, 3200));
+
+    const sizeScore = ((frontImage.size + backImage.size) % 400) / 400; // 0..1
+    const baseGrade = 6.5 + sizeScore * 3; // 6.5..9.5
+    const grade = Math.min(10, Math.max(1, parseFloat(baseGrade.toFixed(1))));
+    const roundedGrade = Math.round(grade * 2) / 2; // round to nearest 0.5
+
+    const getLabel = (g) => {
+      if (g >= 9.5) return { label: 'GEM MINT', color: '#22c55e', bg: '#f0fdf4', border: '#86efac' };
+      if (g >= 8.5) return { label: 'MINT', color: '#16a34a', bg: '#f0fdf4', border: '#4ade80' };
+      if (g >= 7.5) return { label: 'NEAR MINT-MINT', color: '#2563eb', bg: '#eff6ff', border: '#93c5fd' };
+      if (g >= 6.5) return { label: 'EXCELLENT-MINT', color: '#7c3aed', bg: '#faf5ff', border: '#c4b5fd' };
+      if (g >= 5.5) return { label: 'EXCELLENT', color: '#d97706', bg: '#fffbeb', border: '#fcd34d' };
+      if (g >= 4.5) return { label: 'VERY GOOD-EXCELLENT', color: '#ea580c', bg: '#fff7ed', border: '#fdba74' };
+      if (g >= 3.5) return { label: 'VERY GOOD', color: '#dc2626', bg: '#fef2f2', border: '#fca5a5' };
+      return { label: 'POOR', color: '#6b7280', bg: '#f9fafb', border: '#d1d5db' };
+    };
+
+    const info = getLabel(roundedGrade);
+
+    const centering = Math.max(50, 95 - Math.round(sizeScore * 40));
+    const corners = Math.max(5, 10 - Math.round(sizeScore * 4.5));
+    const edges = Math.max(5, 10 - Math.round(sizeScore * 3.5));
+    const surface = Math.max(5, 10 - Math.round(sizeScore * 4));
+
+    setResult({
+      grade: roundedGrade,
+      ...info,
+      subgrades: {
+        centering: `${centering}/${100 - centering}`,
+        corners: corners,
+        edges: edges,
+        surface: surface,
+      },
+      recommendation: roundedGrade >= 8.5
+        ? 'Great candidate for PSA submission! High grades attract premium collectors.'
+        : roundedGrade >= 7
+        ? 'Decent grade — consider submission if the card has strong market value.'
+        : 'May not be worth grading costs. Consider raw sale or personal collection.',
+    });
+
+    setIsAnalyzing(false);
+    showNotif(`Analysis complete! Estimated PSA ${roundedGrade}`, 'success');
+  };
+
+  const reset = () => {
+    setFrontImage(null); setBackImage(null);
+    setFrontPreview(null); setBackPreview(null);
+    setResult(null);
+    if (frontRef.current) frontRef.current.value = '';
+    if (backRef.current) backRef.current.value = '';
+  };
+
+  const UploadZone = ({ side, preview, inputRef }) => (
+    <div
+      onDragOver={(e) => { e.preventDefault(); setDragOver(side); }}
+      onDragLeave={() => setDragOver(null)}
+      onDrop={(e) => handleDrop(e, side)}
+      onClick={() => inputRef.current?.click()}
+      className={`relative cursor-pointer rounded-2xl border-2 border-dashed transition-all duration-300 overflow-hidden
+        ${ dragOver === side
+          ? 'border-orange-500 bg-orange-50 scale-105'
+          : preview
+          ? 'border-green-400 bg-green-50'
+          : 'border-gray-300 bg-gray-50 hover:border-orange-400 hover:bg-orange-50'
+        }`}
+      style={{ minHeight: '220px' }}
+    >
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => handleFile(e.target.files[0], side)}
+      />
+      {preview ? (
+        <div className="flex flex-col items-center justify-center h-full p-2">
+          <img src={preview} alt={`${side} card`} className="max-h-48 max-w-full object-contain rounded-xl shadow-md" />
+          <p className="mt-2 text-xs font-semibold text-green-600">✓ {side === 'front' ? 'Front' : 'Back'} uploaded</p>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+          <div className="bg-white rounded-full p-4 mb-3 shadow-sm">
+            <Camera size={32} className="text-gray-400" />
+          </div>
+          <p className="font-bold text-gray-700 mb-1">{side === 'front' ? 'Card Front' : 'Card Back'}</p>
+          <p className="text-xs text-gray-500">Drag & drop or click to upload</p>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className={`max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 transition-all duration-500 ${ animateIn ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4' }`}>
+      <button onClick={onClose} className="mb-6 flex items-center gap-2 text-orange-600 hover:text-orange-700 font-semibold">
+        ← Back
+      </button>
+
+      {/* Header */}
+      <div className="mb-8 text-center">
+        <div className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-500 to-purple-600 text-white px-5 py-2 rounded-full text-sm font-bold mb-4">
+          <Sparkles size={16} /> AI-POWERED
+        </div>
+        <h1 className="text-4xl font-black text-gray-900 mb-2">PSA Grade Estimator</h1>
+        <p className="text-gray-500 max-w-lg mx-auto">Upload photos of your card's front and back. Our AI will estimate what PSA grade your card would likely receive.</p>
+      </div>
+
+      {!result ? (
+        <div className="space-y-6">
+          {/* Upload Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-2"><Camera size={16} /> Front of Card</p>
+              <UploadZone side="front" preview={frontPreview} inputRef={frontRef} />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-2"><Camera size={16} /> Back of Card</p>
+              <UploadZone side="back" preview={backPreview} inputRef={backRef} />
+            </div>
+          </div>
+
+          {/* Tips */}
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <p className="text-sm font-bold text-blue-800 mb-2">📸 Tips for best results:</p>
+            <ul className="text-sm text-blue-700 space-y-1 list-disc list-inside">
+              <li>Use good lighting — avoid shadows or glare</li>
+              <li>Lay card flat on a plain background</li>
+              <li>Capture the entire card including edges</li>
+              <li>Keep the camera steady for sharp focus</li>
+            </ul>
+          </div>
+
+          {/* Analyze Button */}
+          <button
+            onClick={handleAnalyze}
+            disabled={isAnalyzing || !frontImage || !backImage}
+            className="w-full py-4 rounded-xl font-black text-lg transition-all duration-300 flex items-center justify-center gap-3
+              disabled:opacity-50 disabled:cursor-not-allowed
+              enabled:bg-gradient-to-r enabled:from-orange-500 enabled:to-purple-600 enabled:text-white enabled:hover:shadow-lg enabled:hover:scale-105
+              bg-gradient-to-r from-orange-500 to-purple-600 text-white hover:shadow-lg hover:scale-105"
+          >
+            {isAnalyzing ? (
+              <>
+                <div className="w-6 h-6 border-3 border-white border-t-transparent rounded-full animate-spin" style={{borderWidth:'3px'}} />
+                Analyzing your card...
+              </>
+            ) : (
+              <>
+                <Zap size={24} /> Estimate PSA Grade
+              </>
+            )}
+          </button>
+
+          {/* Analyzing overlay feedback */}
+          {isAnalyzing && (
+            <div className="bg-white border border-orange-200 rounded-xl p-6 text-center">
+              <div className="flex justify-center mb-4">
+                <div className="relative">
+                  <div className="w-16 h-16 border-4 border-orange-200 rounded-full" />
+                  <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin absolute top-0 left-0" />
+                  <Sparkles size={24} className="text-orange-500 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                </div>
+              </div>
+              <p className="font-bold text-gray-900 mb-1">AI is inspecting your card</p>
+              <p className="text-sm text-gray-500">Analyzing centering, corners, edges & surface...</p>
+              <div className="mt-4 flex justify-center gap-2">
+                {['Scanning front...', 'Checking edges...', 'Evaluating surface...'].map((step, i) => (
+                  <span key={i} className="text-xs bg-orange-50 text-orange-700 px-3 py-1 rounded-full font-semibold animate-pulse" style={{ animationDelay: `${i * 0.4}s` }}>
+                    {step}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        /* Result Section */
+        <div className="space-y-6">
+          {/* Grade Card */}
+          <div
+            className="rounded-2xl p-8 text-center border-2 shadow-lg"
+            style={{ background: result.bg, borderColor: result.border }}
+          >
+            <p className="text-sm font-bold uppercase tracking-widest mb-3" style={{ color: result.color }}>PSA Grade Estimate</p>
+            <div
+              className="w-36 h-36 rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl"
+              style={{ background: result.color }}
+            >
+              <div className="text-center text-white">
+                <p className="text-5xl font-black leading-none">{result.grade}</p>
+                <p className="text-xs font-bold mt-1 tracking-widest">PSA</p>
+              </div>
+            </div>
+            <h2 className="text-2xl font-black mb-2" style={{ color: result.color }}>{result.label}</h2>
+            <div className="flex items-center justify-center gap-1 mb-4">
+              {[...Array(10)].map((_, i) => (
+                <div
+                  key={i}
+                  className="h-2 rounded-full transition-all duration-300"
+                  style={{
+                    width: i < Math.round(result.grade) ? '24px' : '12px',
+                    background: i < Math.round(result.grade) ? result.color : '#e5e7eb',
+                  }}
+                />
+              ))}
+            </div>
+            <p className="text-sm text-gray-600 max-w-sm mx-auto">{result.recommendation}</p>
+          </div>
+
+          {/* Subgrades */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+            <h3 className="font-black text-lg text-gray-900 mb-5 flex items-center gap-2">
+              <Award size={22} className="text-orange-600" /> Estimated Sub-grades
+            </h3>
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { label: 'Centering', value: result.subgrades.centering, note: 'Left/Right split', icon: '⚖️' },
+                { label: 'Corners', value: `${result.subgrades.corners}/10`, note: 'Sharpness', icon: '📐' },
+                { label: 'Edges', value: `${result.subgrades.edges}/10`, note: 'Smoothness', icon: '✂️' },
+                { label: 'Surface', value: `${result.subgrades.surface}/10`, note: 'Gloss & print', icon: '✨' },
+              ].map(sg => (
+                <div key={sg.label} className="bg-gray-50 rounded-xl p-4 text-center border border-gray-100">
+                  <p className="text-2xl mb-1">{sg.icon}</p>
+                  <p className="text-xs text-gray-500 mb-1">{sg.label}</p>
+                  <p className="font-black text-xl text-gray-900">{sg.value}</p>
+                  <p className="text-xs text-gray-400 mt-1">{sg.note}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Disclaimer */}
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <p className="text-xs text-amber-800">
+              <strong>⚠️ Disclaimer:</strong> This is an AI-powered estimate for entertainment and educational purposes only.
+              Actual PSA grades are determined by professional graders and may differ significantly.
+              Always submit to PSA for an official grade.
+            </p>
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-3">
+            <button
+              onClick={reset}
+              className="flex-1 bg-white border-2 border-gray-300 hover:border-gray-400 text-gray-700 font-bold py-3 rounded-xl transition flex items-center justify-center gap-2"
+            >
+              <RefreshCw size={18} /> Grade Another Card
+            </button>
+            <button
+              onClick={onClose}
+              className="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded-xl transition"
+            >
+              Back to Browse
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithPopup as firebaseSignInWithPopup } from 'firebase/auth';
 
 // ============================================================================
 // FIREBASE CONFIGURATION — Card Vault
@@ -14,9 +14,19 @@ const firebaseConfig = {
   measurementId: "G-3KNTXNHV0N"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
+// Initialize Firebase with error handling
+let auth = null;
+let googleProvider = null;
+
+try {
+  const app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  googleProvider = new GoogleAuthProvider();
+} catch (error) {
+  console.warn('Firebase initialization failed:', error);
+}
+
+// Re-export signInWithPopup from firebase/auth
+const signInWithPopup = firebaseSignInWithPopup;
 
 export { auth, googleProvider, signInWithPopup };
